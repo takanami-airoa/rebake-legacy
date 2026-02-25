@@ -51,9 +51,8 @@ cd rebake
 export HSR_DATASET_DIR=/path/to/your/rosbag/data
 
 # コンテナをビルドして実行
-cd docker
-docker compose build hsr_data_converter
-docker compose run hsr_data_converter
+make docker-build
+make docker-run
 ```
 
 ### 最初のデータセットを変換
@@ -63,7 +62,7 @@ docker compose run hsr_data_converter
 GIT_LFS_SKIP_SMUDGE=1 uv sync
 
 # rosbagをLeRobot形式に変換（HSR例）
-uv run -m hsr_data_converter.rosbag2lerobot.main \
+uv run -m hsr_data_converter.commands.rosbag2lerobot.main \
     --raw_dir /root/datasets \
     --out_dir ./output \
     --fps 10 \
@@ -77,7 +76,7 @@ uv run -m hsr_data_converter.rosbag2lerobot.main \
 
 ```bash
 # 変換されたデータセットを可視化
-uv run src/hsr_data_converter/visualize/lerobot_dataset.py \
+uv run src/hsr_data_converter/commands/visualize/lerobot_dataset.py \
     --repo-id your_dataset_name \
     --root ./output/{エピソードディレクトリ名} \
     --episode-index 0
@@ -92,10 +91,8 @@ uv run src/hsr_data_converter/visualize/lerobot_dataset.py \
 ```bash
 git clone https://github.com/airoa-org/rebake.git
 cd rebake
-git submodule update --init --recursive
-cd docker
-docker compose build hsr_data_converter
-docker compose run hsr_data_converter
+make docker-build
+make docker-run
 ```
 
 ### ローカル開発セットアップ
@@ -103,11 +100,14 @@ docker compose run hsr_data_converter
 開発用またはローカルインストールを好む場合：
 
 ```bash
+# Git情報の環境変数を設定（データリネージ追跡に必要）
+export GIT_HASH=$(git rev-parse HEAD)
+export GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+export GIT_URL=$(git config --get remote.origin.url)
+export GIT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "no-tag")
+
 # uvで依存関係をインストール
 GIT_LFS_SKIP_SMUDGE=1 uv sync
-
-# サブモジュールを初期化
-git submodule update --init --recursive
 ```
 
 ## 使用方法
@@ -117,7 +117,7 @@ git submodule update --init --recursive
 HSR 記録データを LeRobot 形式に変換：
 
 ```bash
-uv run -m hsr_data_converter.rosbag2lerobot.main \
+uv run -m hsr_data_converter.commands.rosbag2lerobot.main \
     --raw_dir /path/to/rosbags \
     --out_dir /path/to/output \
     --fps 10 \
@@ -133,34 +133,57 @@ uv run -m hsr_data_converter.rosbag2lerobot.main \
 
 ### データ管理
 
-#### エピソードフィルタリング
+#### データセットのパッケージ化
 
-条件に基づいて特定のエピソードを削除：
+FPSと特徴量shapeを検証し、エラーエピソードをフィルタリングして、複数のデータセットを結合します。
+
+
+デフォルトでは結合するデータセット間でバージョンが違う場合、結合しないようにしています。
+ignore_check_version引数にtrueを指定すると、データセット間でバージョンが違っても結合できます。
+
+
+robot_type、robot_ids、labels、location_names、short_horizon_tasksについては引数を指定してフィルターできます。
+引数を指定してフィルターを行う場合、引数で指定したデータと一致するもののみをマージ後のデータセットに含めます。
+引数を指定しない場合はフィルターを行いません。
+
 
 ```bash
-uv run src/hsr_data_converter/filter_episodes.py \
-    --input_dataset_path ./input_dataset \
-    --output_dataset_path ./filtered_dataset \
-    --chunk_size 1000
-```
-
-#### データセット結合
-
-複数のデータセットを結合：
-
-```bash
-uv run src/hsr_data_converter/merge_dataset.py \
+uv run python src/hsr_data_converter/commands/package/package.py \
     --sources ./dataset1 ./dataset2 \
     --output ./merged_dataset \
-    --fps 10
+    --fps 10 \
+    --ignore_check_version true \
+    --robot_type hsr \
+    --robot_ids robot001 robot002 \
+    --labels label1 label2 \
+    --location_names location001 \
+    --short_horizon_tasks "Washing dishes in the dishwasher" "Open the towel stand and hang the towel."
 ```
+
+
+use_awsオプションを設定することで、パッケージ対象のデータセットとパッケージ後のデータセットの出力先をAWSにすることができます。
+use_awsオプションを使う場合はsecret、source_bucket、output_bucketの設定は必須になります。
+
+
+```bash
+uv run python src/hsr_data_converter/commands/package/package.py \
+    --sources 20251202/dataset1 20251202/dataset2 \
+    --output 20251202/merged_dataset \
+    --fps 10 \
+    --ignore_check_version true \
+    --use_aws \
+    --secret test-secret \
+    --source-bucket input-dataset-bucket \
+    --output-bucket output-dataset-bucket
+```
+
 
 #### データ可視化
 
 データセット可視化を生成：
 
 ```bash
-uv run src/hsr_data_converter/visualize/lerobot_dataset.py \
+uv run src/hsr_data_converter/commands/visualize/lerobot_dataset.py \
     --repo-id dataset_name \
     --root ./dataset_path \
     --episode-index 0
@@ -221,7 +244,7 @@ make test-coverage
 
 ```bash
 # 特定のテスト実行
-uv run pytest tests/test_rosbag2lerobot.py -v
+uv run pytest tests/unit/commands/rosbag2lerobot/test_core_converter.py -v
 
 # カバレッジ付きで実行
 make test-coverage
@@ -234,7 +257,6 @@ make test-coverage
 1. **Docker ビルド失敗**: Docker と nVidia-docker が適切にインストールされていることを確認
 2. **メモリエラー**: 大規模データセット用に Docker メモリ割り当てを増加
 3. **権限エラー**: ファイル権限と Docker ボリュームマウントをチェック
-4. **依存関係不足**: `git submodule update --init --recursive`を実行
 
 ### ヘルプ
 

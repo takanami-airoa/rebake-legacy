@@ -115,3 +115,39 @@ variable "secret_name" {
   description = "Secret name"
   type        = string
 }
+
+variable "git_hash" {
+  description = "Git commit hash"
+  type        = string
+  default     = ""
+}
+
+variable "git_branch" {
+  description = "Git branch name"
+  type        = string
+  default     = ""
+}
+
+variable "git_url" {
+  description = "Git repository URL"
+  type        = string
+  default     = ""
+}
+
+variable "git_tag" {
+  description = "Git tag"
+  type        = string
+  default     = ""
+}
+
+variable "lineage_enabled" {
+  description = "True if lineage is used, false otherwise."
+  type        = bool
+  default     = false
+}
+
+variable "marquez_url" {
+  description = "marquez url"
+  type        = string
+  default     = ""
+}

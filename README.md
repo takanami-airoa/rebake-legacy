@@ -64,9 +64,8 @@ cd rebake
 export HSR_DATASET_DIR=/path/to/your/rosbag/data
 
 # Build and run the container
-cd docker
-docker compose build hsr_data_converter
-docker compose run hsr_data_converter
+make docker-build
+make docker-run
 ```
 
 ### Convert Your First Dataset
@@ -76,7 +75,7 @@ docker compose run hsr_data_converter
 GIT_LFS_SKIP_SMUDGE=1 uv sync
 
 # Convert rosbag to LeRobot format (HSR example)
-uv run -m hsr_data_converter.rosbag2lerobot.main \
+uv run -m hsr_data_converter.commands.rosbag2lerobot.main \
     --raw_dir /root/datasets \
     --out_dir ./output \
     --fps 10 \
@@ -90,7 +89,7 @@ uv run -m hsr_data_converter.rosbag2lerobot.main \
 
 ```bash
 # Visualize the converted dataset
-uv run src/hsr_data_converter/visualize/lerobot_dataset.py \
+uv run src/hsr_data_converter/commands/visualize/lerobot_dataset.py \
     --repo-id your_dataset_name \
     --root ./output/{Episode directory name} \
     --episode-index 0
@@ -105,10 +104,8 @@ The easiest way to get started is using the provided Docker environment:
 ```bash
 git clone https://github.com/airoa-org/rebake.git
 cd rebake
-git submodule update --init --recursive
-cd docker
-docker compose build hsr_data_converter
-docker compose run hsr_data_converter
+make docker-build
+make docker-run
 ```
 
 ### Local Development Setup
@@ -116,11 +113,14 @@ docker compose run hsr_data_converter
 For development or if you prefer local installation:
 
 ```bash
+# Set Git information environment variables (required for data lineage tracking)
+export GIT_HASH=$(git rev-parse HEAD)
+export GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+export GIT_URL=$(git config --get remote.origin.url)
+export GIT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "no-tag")
+
 # Install dependencies with uv
 GIT_LFS_SKIP_SMUDGE=1 uv sync
-
-# Initialize submodules
-git submodule update --init --recursive
 ```
 
 ## Usage
@@ -130,7 +130,7 @@ git submodule update --init --recursive
 Convert HSR recorded data to LeRobot format:
 
 ```bash
-uv run -m hsr_data_converter.rosbag2lerobot.main \
+uv run -m hsr_data_converter.commands.rosbag2lerobot.main \
     --raw_dir /path/to/rosbags \
     --out_dir /path/to/output \
     --fps 10 \
@@ -139,6 +139,13 @@ uv run -m hsr_data_converter.rosbag2lerobot.main \
     --separate_per_primitive false
 ```
 
+#### Advanced Options
+
+Additional configuration flags for fine-tuning conversion behavior:
+
+- `--enforce_joint_limits`: Clamp absolute action values to valid joint ranges (default: false)
+- `--silent_load`: Continue processing when episode loading fails instead of raising exceptions (default: false)
+
 ### Processing Modes
 
 - **`individual`**: Convert each rosbag to separate datasets
@@ -146,34 +153,56 @@ uv run -m hsr_data_converter.rosbag2lerobot.main \
 
 ### Data Management
 
-#### Filter Episodes
+#### Package Datasets
 
-Remove specific episodes based on criteria:
+Validate FPS and feature shapes, filter error episodes, and merge multiple datasets.
+
+
+If the datasets to be merged have different versions, they are not merged. 
+By specifying true for the ignore_check_version argument, the datasets can be merged even if their versions differ.
+
+
+Arguments can be specified for filtering by robot_type, robot_ids, labels, location_names, and short_horizon_tasks.
+When filtering with specified arguments, only data matching those arguments will be included in the merged dataset.
+If no arguments are specified, no filtering is performed.
+
 
 ```bash
-uv run src/hsr_data_converter/filter_episodes.py \
-    --input_dataset_path ./input_dataset \
-    --output_dataset_path ./filtered_dataset \
-    --chunk_size 1000
-```
-
-#### Merge Datasets
-
-Combine multiple datasets:
-
-```bash
-uv run src/hsr_data_converter/merge_dataset.py \
+uv run python src/hsr_data_converter/commands/package/package.py \
     --sources ./dataset1 ./dataset2 \
     --output ./merged_dataset \
-    --fps 10
+    --fps 10 \
+    --ignore_check_version true \
+    --robot_type hsr \
+    --robot_ids robot001 robot002 \
+    --labels label1 label2 \
+    --location_names location001 \
+    --short_horizon_tasks "Washing dishes in the dishwasher" "Open the towel stand and hang the towel."
 ```
+
+By configuring the use_aws option, you can set both the source dataset and the output destination of the packaged dataset to be on AWS. 
+When using the use_aws option, it is necessary to provide the secret, source_bucket, and output_bucket configurations.
+
+
+```bash
+uv run python src/hsr_data_converter/commands/package/package.py \
+    --sources 20251202/dataset1 20251202/dataset2 \
+    --output 20251202/merged_dataset \
+    --fps 10 \
+    --ignore_check_version true \
+    --use_aws \
+    --secret test-secret \
+    --source-bucket input-dataset-bucket \
+    --output-bucket output-dataset-bucket
+```
+
 
 #### Visualize Data
 
 Generate dataset visualization:
 
 ```bash
-uv run src/hsr_data_converter/visualize/lerobot_dataset.py \
+uv run src/hsr_data_converter/commands/visualize/lerobot_dataset.py \
     --repo-id dataset_name \
     --root ./dataset_path \
     --episode-index 0
@@ -234,7 +263,7 @@ make test-coverage
 
 ```bash
 # Run specific test
-uv run pytest tests/test_rosbag2lerobot.py -v
+uv run pytest tests/unit/commands/rosbag2lerobot/test_core_converter.py -v
 
 # Run with coverage
 make test-coverage
@@ -247,7 +276,6 @@ make test-coverage
 1. **Docker build fails**: Ensure Docker and nvidia-docker are properly installed
 2. **Memory errors**: Increase Docker memory allocation for large datasets
 3. **Permission errors**: Check file permissions and Docker volume mounts
-4. **Missing dependencies**: Run `git submodule update --init --recursive`
 
 ### Getting Help
 

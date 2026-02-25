@@ -12,9 +12,8 @@ We welcome contributions to make robot data conversion more accessible and suppo
    cd robot_data_pipeline
    ```
 
-2. Initialize submodules and install dependencies:
+2. Install dependencies:
    ```bash
-   git submodule update --init --recursive
    GIT_LFS_SKIP_SMUDGE=1 uv sync
    ```
 

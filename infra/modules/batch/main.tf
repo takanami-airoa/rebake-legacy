@@ -56,7 +56,7 @@ resource "aws_batch_job_definition" "pipeline_job_definition" {
     command = [
       ".venv/bin/python",
       "-m",
-      "hsr_data_converter.rosbag2lerobot.main",
+      "hsr_data_converter.commands.rosbag2lerobot.main",
       "--secret_name",
       "Ref::SECRET_NAME",
       "--rosbags_bucket_name",
@@ -79,8 +79,34 @@ resource "aws_batch_job_definition" "pipeline_job_definition" {
       "FPS"                  = var.fps,
     }
 
-    environment = []
-    secrets     = [],
+    environment = [
+      {
+        name  = "GIT_BRANCH"
+        value = var.git_branch
+      },
+      {
+        name  = "GIT_HASH"
+        value = var.git_hash
+      },
+      {
+        name  = "GIT_TAG"
+        value = var.git_tag
+      },
+      {
+        name  = "GIT_URL"
+        value = var.git_url
+      },
+    ]
+    secrets = [
+      {
+        name      = "LINEAGE_ENABLED"
+        valueFrom = aws_ssm_parameter.lineage_enabled.arn
+      },
+      {
+        name      = "MARQUEZ_URL"
+        valueFrom = aws_ssm_parameter.marquez_url.arn
+      },
+    ],
 
 
     networkConfiguration = {
@@ -120,4 +146,27 @@ resource "aws_cloudwatch_log_group" "batch_logs" {
   retention_in_days = var.log_retention_days
 
   tags = var.common_tags
+}
+
+resource "aws_ssm_parameter" "lineage_enabled" {
+  name            = "/${var.environment}/${var.system_name}/lineage-enabled"
+  type            = "SecureString"
+  allowed_pattern = "^(true)|(false)$"
+  value           = var.lineage_enabled ? "true" : "false"
+  lifecycle {
+    ignore_changes = [
+      value,
+    ]
+  }
+}
+
+resource "aws_ssm_parameter" "marquez_url" {
+  name  = "/${var.environment}/${var.system_name}/marquez-url"
+  type  = "SecureString"
+  value = var.marquez_url
+  lifecycle {
+    ignore_changes = [
+      value,
+    ]
+  }
 }

@@ -135,6 +135,25 @@ resource "aws_iam_role_policy_attachment" "batch_exe_ecs_task_execution_role_pol
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# Batch実行ロールにSSM Parameter読み取り権限を追加
+resource "aws_iam_role_policy" "batch_exe_ssm_policy" {
+  name = "${var.environment}-${var.system_name}-batch-exe-ssm-policy"
+  role = aws_iam_role.batch_exe_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameters",
+          "ssm:GetParameter"
+        ]
+        Resource = "arn:aws:ssm:${var.region}:${var.account}:parameter/${var.environment}/${var.system_name}/*"
+      }
+    ]
+  })
+}
 
 # Batch (ジョブロール)
 resource "aws_iam_role" "batch_job_role" {

@@ -5,46 +5,12 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG PYTHON_VERSION=3.10
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and compilers
+# Install basic tools and Python
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    autoconf \
-    automake \
-    build-essential \
-    cmake \
-    libtool \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install basic tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    gawk \
     git \
     git-lfs \
-    grep \
-    htop \
-    less \
-    nano \
-    screen \
-    sed \
-    texinfo \
-    tmux \
-    tree \
-    unzip \
-    util-linux \
-    vim \
+    build-essential \
     wget \
-    zip \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install essential graphics libraries (for GUI applications)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libegl1-mesa \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install python
-RUN apt-get update && apt-get install -y --no-install-recommends \
     python${PYTHON_VERSION} \
     python${PYTHON_VERSION}-dev \
     python${PYTHON_VERSION}-venv \
@@ -60,17 +26,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 ENV PATH="/root/.local/bin:$PATH"
 RUN wget -qO- https://astral.sh/uv/install.sh | sh
 
-# Install FFmpeg
-COPY ./docker/scripts/ffmpeg_installer.sh ./ffmpeg_installer.sh
-RUN chmod +x ./ffmpeg_installer.sh && ./ffmpeg_installer.sh
-RUN ln -s /root/.ffmpeg/bin/ffmpeg /usr/bin/ffmpeg && ln -s /root/.ffmpeg/bin/ffprobe /usr/bin/ffprobe
-
-# Clean up and remove unnecessary files
-RUN apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
 COPY src/ ./src/
-COPY third_party/ ./third_party/
 COPY .python-version .
 COPY pyproject.toml .
 COPY uv.lock .
@@ -78,10 +34,14 @@ COPY README.md .
 
 RUN GIT_LFS_SKIP_SMUDGE=1 uv sync --frozen --no-editable
 
-# Save the current git commit ID and BRANCH as an environment variable
+# Save the current git information an environment variable
 ARG GIT_HASH
 ARG GIT_BRANCH
-ENV GIT_HASH=${GIT_HASH}
-ENV GIT_BRANCH=${GIT_BRANCH}
+ARG GIT_URL
+ARG GIT_TAG
+ENV GIT_HASH=${GIT_HASH} \
+    GIT_BRANCH=${GIT_BRANCH} \
+    GIT_URL=${GIT_URL} \
+    GIT_TAG=${GIT_TAG}
 
 CMD ["/bin/bash"]

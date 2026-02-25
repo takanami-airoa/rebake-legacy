@@ -10,8 +10,6 @@ services:
     environment:
       # Enable GUI display via X Server.
       - DISPLAY=${DISPLAY:-:0}
-      - GIT_HASH=${GIT_HASH:-}
-      - GIT_BRANCH=${GIT_BRANCH:-}
       - QT_X11_NO_MITSHM=1
       # Configure Nvidia Docker interface.
       - NVIDIA_VISIBLE_DEVICES=all

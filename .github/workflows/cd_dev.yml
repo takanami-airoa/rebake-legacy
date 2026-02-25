@@ -1,0 +1,33 @@
+name: CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "src/**"
+      - "docker/**"
+      - "infra/**"
+      - ".github/workflows/**"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  cd:
+    uses: ./.github/workflows/cd_template.yml
+    with:
+      environment: dev
+      aws-region: ap-northeast-1
+      ecr-repository: dev-data-pipeline-ecr
+    secrets:
+      access-token: ${{ secrets.ACCESS_TOKEN }}
+      aws-account-id: ${{ secrets.AWS_ACCOUNT_ID_DEV }}
+      backend-bucket: ${{ secrets.TF_BACKEND_BUCKET_DEV }}
+      backend-key: ${{ secrets.TF_BACKEND_KEY_DEV }}
+      backend-region: ${{ secrets.TF_BACKEND_REGION_DEV }}
+      system-name: ${{ secrets.TF_SYSTEM_NAME_DEV }}
+      secret-name: ${{ secrets.TF_SECRET_NAME_DEV }}
+      lerobot-bucket-name: ${{ secrets.TF_LEROBOT_BUCKET_NAME_DEV }}
+      ros-bags-bucket-name: ${{ secrets.TF_ROS_BAGS_BUCKET_NAME_DEV }}
+ 

@@ -1,0 +1,8 @@
+[
+  {
+    "episode_index": 0,
+    "errors": [
+      {"frame_id": 10, "error_class": "missing_camera_image", "details": "Missing camera image"}
+    ]
+  }
+]

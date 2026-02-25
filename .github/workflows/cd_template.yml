@@ -1,0 +1,137 @@
+name: CD Template
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      aws-region:
+        required: true
+        type: string
+      ecr-repository:
+        required: true
+        type: string
+    secrets:
+      access-token:
+        required: true
+      aws-account-id:
+        required: true
+      backend-bucket:
+        required: true
+      backend-key:
+        required: true
+      backend-region:
+        required: true
+      system-name:
+        required: true
+      secret-name:
+        required: true
+      lerobot-bucket-name:
+        required: true
+      ros-bags-bucket-name:
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  LAMBDA_HANDLER: "aws_batch_launcher.lambda_handler"
+  LAMBDA_SOURCES_ITEM1_PATH: "../../../aws_lambda/src/aws_batch_launcher.py"
+  LAMBDA_SOURCES_ITEM1_FILENAME: "aws_batch_launcher.py"
+  LAMBDA_SOURCES_ITEM2_PATH: "../../../src/hsr_data_converter/utils/aws_helper.py"
+  LAMBDA_SOURCES_ITEM2_FILENAME: "src/hsr_data_converter/utils/aws_helper.py"
+  JOB_MEMORY: "24576"
+  FPS: "10"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.access-token }}
+          submodules: recursive
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.aws-account-id }}:role/datapipeline-github-actions-role
+          aws-region: ap-northeast-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Get git metadata
+        id: git-metadata
+        run: |
+          echo "git_hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "git_branch=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_OUTPUT
+          echo "git_url=$(git config --get remote.origin.url)" >> $GITHUB_OUTPUT
+          echo "git_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo 'no-tag')" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.git-metadata.outputs.git_hash }}
+          GIT_HASH: ${{ steps.git-metadata.outputs.git_hash }}
+          GIT_BRANCH: ${{ steps.git-metadata.outputs.git_branch }}
+          GIT_URL: ${{ steps.git-metadata.outputs.git_url }}
+          GIT_TAG: ${{ steps.git-metadata.outputs.git_tag }}
+        run: |
+          docker build -f docker/Dockerfile.aws \
+            -t $ECR_REGISTRY/${{ inputs.ecr-repository }}:$IMAGE_TAG \
+            -t $ECR_REGISTRY/${{ inputs.ecr-repository }}:latest \
+            --build-arg GIT_HASH=$GIT_HASH \
+            --build-arg GIT_BRANCH=$GIT_BRANCH \
+            --build-arg GIT_URL=$GIT_URL \
+            --build-arg GIT_TAG=$GIT_TAG \
+            .
+          docker push $ECR_REGISTRY/${{ inputs.ecr-repository }}:$IMAGE_TAG
+          docker push $ECR_REGISTRY/${{ inputs.ecr-repository }}:latest
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.6
+
+      - name: Terraform Init
+        working-directory: infra/envs/${{ inputs.environment }}
+        run: |
+          terraform init \
+          -backend-config="bucket=${{ secrets.backend-bucket }}" \
+          -backend-config="key=${{ secrets.backend-key }}" \
+          -backend-config="region=${{ secrets.backend-region }}"  \
+          -backend-config="encrypt=true" 
+
+      - name: Terraform Apply
+        working-directory: infra/envs/${{ inputs.environment }}
+        run: |
+          terraform apply -auto-approve \
+          -var='environment=${{ inputs.environment }}' \
+          -var='system_name=${{ secrets.system-name }}' \
+          -var='aws_region=${{ inputs.aws-region }}' \
+          -var='secret_name=${{ secrets.secret-name }}' \
+          -var='lambda_handler=${{ env.LAMBDA_HANDLER }}' \
+          -var='lerobot_bucket_name=${{ secrets.lerobot-bucket-name }}' \
+          -var='ros_bags_bucket_name=${{ secrets.ros-bags-bucket-name }}' \
+          -var='job_memory=${{ env.JOB_MEMORY }}' \
+          -var='fps=${{ env.FPS }}' \
+          -var='git_hash=${{ steps.git-metadata.outputs.git_hash }}' \
+          -var='git_branch=${{ steps.git-metadata.outputs.git_branch }}' \
+          -var='git_url=${{ steps.git-metadata.outputs.git_url }}' \
+          -var='git_tag=${{ steps.git-metadata.outputs.git_tag }}' \
+          -var='lambda_sources=[
+            {
+              path="${{ env.LAMBDA_SOURCES_ITEM1_PATH }}",
+              filename="${{ env.LAMBDA_SOURCES_ITEM1_FILENAME }}"
+            },
+            {
+              path="${{ env.LAMBDA_SOURCES_ITEM2_PATH }}",
+              filename="${{ env.LAMBDA_SOURCES_ITEM2_FILENAME }}"
+            }
+          ]'

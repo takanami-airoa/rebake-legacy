@@ -28,3 +28,13 @@ max_vcpus = 80
 job_vcpus = 4
 job_memory = 24576
 fps = 30
+
+# Git metadata (optional)
+git_hash   = ""  # e.g., "abc123def456"
+git_branch = ""  # e.g., "main" or "develop"
+git_url    = ""  # e.g., "https://github.com/your-org/your-repo"
+git_tag    = ""  # e.g., "v1.0.0"
+
+# lineage
+lineage_enabled = true
+marquez_url     = "https://example.com"

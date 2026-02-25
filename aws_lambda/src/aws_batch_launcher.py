@@ -75,7 +75,7 @@ def lambda_handler(event, context):
                     "command": [
                         ".venv/bin/python",
                         "-m",
-                        "hsr_data_converter.rosbag2lerobot.main",
+                        "hsr_data_converter.commands.rosbag2lerobot.main",
                         "--secret_name",
                         "Ref::secret_name",
                         "--rosbags_bucket_name",

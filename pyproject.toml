@@ -15,6 +15,7 @@ dependencies = [
     "rosbags>=0.10.8",
     "boto3>=1.37.10",
     "airoa-metadata",
+    "airoa-lineage",
 ]
 authors = [
   {name = "Takuya Okubo", email = "tosimiti7@gmail.com"},
@@ -47,3 +48,7 @@ disable_error_code = ["import-untyped"]
 
 [tool.uv.sources]
 airoa-metadata = { git = "https://github.com/airoa-org/airoa-metadata.git" }
+airoa-lineage = { git = "https://github.com/airoa-org/airoa-lineage.git" }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hsr_data_converter"]

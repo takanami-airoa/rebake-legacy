@@ -145,6 +145,14 @@ module "batch" {
   ros_bags_bucket_name = var.ros_bags_bucket_name
   lerobot_bucket_name  = var.lerobot_bucket_name
 
+  git_hash   = var.git_hash
+  git_branch = var.git_branch
+  git_url    = var.git_url
+  git_tag    = var.git_tag
+
+  lineage_enabled = var.lineage_enabled
+  marquez_url     = var.marquez_url
+
   common_tags = local.common_tags
 }
 

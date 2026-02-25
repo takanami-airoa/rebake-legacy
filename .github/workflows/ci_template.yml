@@ -1,0 +1,145 @@
+name: CI Template
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      aws-region:
+        required: true
+        type: string
+    secrets:
+      access-token:
+        required: true
+      aws-account-id:
+        required: true
+      backend-bucket:
+        required: true
+      backend-key:
+        required: true
+      backend-region:
+        required: true
+      system-name:
+        required: true
+      secret-name:
+        required: true
+      lerobot-bucket-name:
+        required: true
+      ros-bags-bucket-name:
+        required: true
+
+env:
+  LAMBDA_HANDLER: "aws_batch_launcher.lambda_handler"
+  LAMBDA_SOURCES_ITEM1_PATH: "../../../aws_lambda/src/aws_batch_launcher.py"
+  LAMBDA_SOURCES_ITEM1_FILENAME: "aws_batch_launcher.py"
+  LAMBDA_SOURCES_ITEM2_PATH: "../../../src/hsr_data_converter/utils/aws_helper.py"
+  LAMBDA_SOURCES_ITEM2_FILENAME: "src/hsr_data_converter/utils/aws_helper.py"
+  JOB_MEMORY: "24576"
+  FPS: "10"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.access-token }}
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv sync --group dev
+
+      - name: Run format check
+        run: make format
+
+      - name: Run lint checks
+        run: make lint
+
+      - name: Run unit tests
+        run: make test
+
+      - name: Run integration tests
+        run: make test-integration
+
+  infra:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.access-token }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.aws-account-id }}:role/datapipeline-github-actions-role
+          aws-region: ap-northeast-1
+
+      - name: Get git metadata
+        id: git-metadata
+        run: |
+          echo "git_hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "git_branch=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_OUTPUT
+          echo "git_url=$(git config --get remote.origin.url)" >> $GITHUB_OUTPUT
+          echo "git_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo 'no-tag')" >> $GITHUB_OUTPUT
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.6
+
+      - name: Terraform Init
+        working-directory: infra/envs/${{ inputs.environment }}
+        run: |
+          terraform init \
+          -backend-config="bucket=${{ secrets.backend-bucket }}" \
+          -backend-config="key=${{ secrets.backend-key }}" \
+          -backend-config="region=${{ secrets.backend-region }}"  \
+          -backend-config="encrypt=true" 
+
+      - name: Terraform format
+        run: terraform fmt -recursive -check
+        working-directory: infra
+
+      - name: Terraform Plan
+        working-directory: infra/envs/${{ inputs.environment }}
+        run: |
+          terraform plan \
+          -var='environment=${{ inputs.environment }}' \
+          -var='system_name=${{ secrets.system-name }}' \
+          -var='aws_region=${{ inputs.aws-region }}' \
+          -var='secret_name=${{ secrets.secret-name }}' \
+          -var='lambda_handler=${{ env.LAMBDA_HANDLER }}' \
+          -var='lerobot_bucket_name=${{ secrets.lerobot-bucket-name }}' \
+          -var='ros_bags_bucket_name=${{ secrets.ros-bags-bucket-name }}' \
+          -var='job_memory=${{ env.JOB_MEMORY }}' \
+          -var='fps=${{ env.FPS }}' \
+          -var='git_hash=${{ steps.git-metadata.outputs.git_hash }}' \
+          -var='git_branch=${{ steps.git-metadata.outputs.git_branch }}' \
+          -var='git_url=${{ steps.git-metadata.outputs.git_url }}' \
+          -var='git_tag=${{ steps.git-metadata.outputs.git_tag }}' \
+          -var='lambda_sources=[
+            {
+              path="${{ env.LAMBDA_SOURCES_ITEM1_PATH }}",
+              filename="${{ env.LAMBDA_SOURCES_ITEM1_FILENAME }}"
+            },
+            {
+              path="${{ env.LAMBDA_SOURCES_ITEM2_PATH }}",
+              filename="${{ env.LAMBDA_SOURCES_ITEM2_FILENAME }}"
+            }
+          ]'
