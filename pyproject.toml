@@ -17,10 +17,7 @@ dependencies = [
     "airoa-metadata",
 ]
 authors = [
-  {name = "Takuya Okubo", email = "tosimiti7@gmail.com"},
-  {name = "Makoto Sato", email = "makoto.sato@weblab.t.u-tokyo.ac.jp"},
-  {name = "Koya Sakamoto", email = "koya.sakamoto@weblab.t.u-tokyo.ac.jp"},
-  {name = "Ryosuke Takanami", email = "takanami@weblab.t.u-tokyo.ac.jp"}
+  {name = "Anonymous"}
 ]
 
 [project.scripts]
@@ -46,4 +43,4 @@ exclude = []
 disable_error_code = ["import-untyped"]
 
 [tool.uv.sources]
-airoa-metadata = { git = "https://github.com/airoa-org/airoa-metadata.git" }
+airoa-metadata = { git = "<metadata-schema-repository-url>" }  # withheld for anonymous review

@@ -2,7 +2,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Robots](https://img.shields.io/badge/Robots-HSR-blue)](https://github.com/airoa-org/rebake)
+![Robots](https://img.shields.io/badge/Robots-HSR-blue)
 
 > 🥖 Take raw robot data, sprinkle in metadata, and rebake it into fresh, standardized LeRobot datasets — ready to serve your machine learning models.
 
@@ -32,7 +32,7 @@ No more format fragmentation — just tasty, standardized data your models will 
 | -------------- | ------------- | ----------- | ------------------------------ | ------ |
 | Toyota HSR     | ✅ Production | rosbag      | Full conversion, visualization | `hsr`  |
 
-> **Want your robot supported?** [Open an issue](https://github.com/airoa-org/rebake/issues/new) or contribute a plugin!
+> **Want your robot supported?** Open an issue or contribute a plugin!
 
 ### Key Features
 
@@ -57,7 +57,7 @@ No more format fragmentation — just tasty, standardized data your models will 
 
 ```bash
 # Clone the repository
-git clone https://github.com/airoa-org/rebake.git
+git clone <repository-url> rebake
 cd rebake
 
 # Set your HSR dataset directory
@@ -103,7 +103,7 @@ uv run src/hsr_data_converter/visualize/lerobot_dataset.py \
 The easiest way to get started is using the provided Docker environment:
 
 ```bash
-git clone https://github.com/airoa-org/rebake.git
+git clone <repository-url> rebake
 cd rebake
 git submodule update --init --recursive
 cd docker
@@ -251,7 +251,7 @@ make test-coverage
 
 ### Getting Help
 
-- 🐛 Report issues on [GitHub Issues](https://github.com/airoa-org/rebake/issues)
+- 🐛 Report issues on GitHub Issues
 
 ## Contributing
 
@@ -273,4 +273,3 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ---
 
-Made with ❤️ by the [AIRoA Team](https://github.com/airoa-org)

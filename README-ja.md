@@ -2,7 +2,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Robots](https://img.shields.io/badge/Robots-HSR-blue)](https://github.com/airoa-org/rebake)
+![Robots](https://img.shields.io/badge/Robots-HSR-blue)
 
 > 🥖 生のロボットデータにメタ情報をまぶして、焼き直せば、学習にすぐ使えるLeRobotデータセットに。
 
@@ -21,7 +21,7 @@ Rebake は、ロボティクスデータ収集と ML モデルトレーニング
 | ------------------------ | ----------- | ---------- | ---------------- | ----- |
 | Toyota HSR               | ✅ 本番環境 | rosbag     | 完全変換、可視化 | `hsr` |
 
-> **あなたのロボットをサポートして欲しいですか？** [Issue を開く](https://github.com/airoa-org/rebake/issues/new) またはプラグインを貢献してください！
+> **あなたのロボットをサポートして欲しいですか？** Issue を開く またはプラグインを貢献してください！
 
 ### 主要機能
 
@@ -44,7 +44,7 @@ Rebake は、ロボティクスデータ収集と ML モデルトレーニング
 
 ```bash
 # リポジトリをクローン
-git clone https://github.com/airoa-org/rebake.git
+git clone <repository-url> rebake
 cd rebake
 
 # HSRデータセットディレクトリを設定
@@ -90,7 +90,7 @@ uv run src/hsr_data_converter/visualize/lerobot_dataset.py \
 提供された Docker 環境を使用するのが最も簡単です：
 
 ```bash
-git clone https://github.com/airoa-org/rebake.git
+git clone <repository-url> rebake
 cd rebake
 git submodule update --init --recursive
 cd docker
@@ -238,7 +238,7 @@ make test-coverage
 
 ### ヘルプ
 
-- 🐛 [GitHub Issues](https://github.com/airoa-org/rebake/issues)で issue を報告
+- 🐛 GitHub Issuesで issue を報告
 
 ## コントリビューション
 
@@ -260,4 +260,3 @@ make test-coverage
 
 ---
 
-❤️ [AIRoA Team](https://github.com/airoa-org)によって作成されました
