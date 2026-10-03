@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from airoa_metadata import Metadata, MetadataBase, MetadataLoader, MetadataV1_0
+from moma_metadata import Metadata, MetadataBase, MetadataLoader, MetadataV1_0
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from rosbags.typesys.store import Typestore
 

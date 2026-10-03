@@ -123,7 +123,7 @@ wheels = [
 ]
 
 [[package]]
-name = "airoa-metadata"
+name = "moma-metadata"
 version = "1.3.0"
 source = { git = "<metadata-schema-repository-url>#44169de634233a050e56851664377ddd3c0a704f" }
 dependencies = [
@@ -956,7 +956,7 @@ name = "hsr-data-converter"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "airoa-metadata" },
+    { name = "moma-metadata" },
     { name = "boto3" },
     { name = "lerobot" },
     { name = "matplotlib" },
@@ -976,7 +976,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "airoa-metadata", git = "<metadata-schema-repository-url>" },
+    { name = "moma-metadata", git = "<metadata-schema-repository-url>" },
     { name = "boto3", specifier = ">=1.37.10" },
     { name = "lerobot", specifier = "==0.3.2" },
     { name = "matplotlib", specifier = ">=3.10.1" },

@@ -14,7 +14,7 @@ dependencies = [
     "natsort>=8.4.0",
     "rosbags>=0.10.8",
     "boto3>=1.37.10",
-    "airoa-metadata",
+    "moma-metadata",
 ]
 authors = [
   {name = "Anonymous"}
@@ -43,4 +43,4 @@ exclude = []
 disable_error_code = ["import-untyped"]
 
 [tool.uv.sources]
-airoa-metadata = { git = "<metadata-schema-repository-url>" }  # withheld for anonymous review
+moma-metadata = { git = "<metadata-schema-repository-url>" }  # withheld for anonymous review

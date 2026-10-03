@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import draccus  # draccus is used for generating the CLI
-from airoa_metadata import MetadataV0_0
+from moma_metadata import MetadataV0_0
 from tqdm import tqdm
 
 

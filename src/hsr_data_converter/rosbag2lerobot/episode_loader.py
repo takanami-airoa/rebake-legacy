@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple, cast
 
 import numpy as np
 import torch
-from airoa_metadata import Metadata
+from moma_metadata import Metadata
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from rosbags.highlevel import AnyReader
 from rosbags.typesys.store import Typestore

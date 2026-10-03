@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 import jsonlines
 import numpy as np
 import torch
-from airoa_metadata import Metadata
-from airoa_metadata.versions.v1_3 import (
+from moma_metadata import Metadata
+from moma_metadata.versions.v1_3 import (
     ContextV1_3,
     FileV1_3,
     InstructionV1_3,
